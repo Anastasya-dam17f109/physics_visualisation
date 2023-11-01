@@ -2,8 +2,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import datetime
 
-
-
+import pyqtgraph as pg
+#from pyqtgraph.Qt import QtGui
+from pyqtgraph.Qt import QtCore, QtGui
 
 class data_visualiser:
     def __init__(self, file_meta, file_data, work_dir):
@@ -53,8 +54,15 @@ class data_visualiser:
             self.value_mass = self.data_mass[start: start + window]
             self.plot_time_mass = self.time_mass[start: start + window]
 
+            pg.mkQApp()
+            win = pg.GraphicsView()
+            win.resize(800, 600)
+            plot = win.addPlot(title="Plot with Legend")
+            plot.plot(self.plot_time_mass, self.value_mass, pen='r', name='series')
 
+            plot.addLegend()
             #print("collected")
+            ''' 
             fig, axs = [], []
             len_fragm = len(self.plot_time_mass) // split_num
             for i in range(split_num):
@@ -66,11 +74,12 @@ class data_visualiser:
                 for index, label in enumerate(axs[i].xaxis.get_ticklabels()):
                     if index % 12000 != 0:
                         label.set_visible(False)
-            plt.show()
+            plt.show()'''
 
     def print_window_data_by_mounth(self, split_num, window,start,char_num):
         self.data_mass = []
         self.time_mass = []
+        self.time_mass_raw = []
         self.value_mass = []
         ch = np.loadtxt("C:/Users/ADostovalova/Desktop/work/data_phys/202304_measurements.txt", dtype= "float32")
         print("measures load")
@@ -80,58 +89,33 @@ class data_visualiser:
         for i in range(24*60*60*30):
             self.time_mass.append(str(left_bound) + ".197")
             self.time_mass.append(str(left_bound) + ".696")
-            dict_idx.update({str(left_bound).replace(" ",":") + ".197": counter})
-            dict_idx.update({str(left_bound).replace(" ",":") + ".696": counter+1})
+            self.time_mass_raw.append(left_bound)
+            self.time_mass_raw.append(left_bound)
+            dict_idx.update({left_bound.strftime('%d-%m-23:%H:%M:%S') + ".197": counter})
+            dict_idx.update({left_bound.strftime('%d-%m-23:%H:%M:%S') + ".696": counter+1})
             left_bound = left_bound + datetime.timedelta(0, 1)
-            counter += 1
+            counter += 2
         print("time set")
-        print(dict_idx)
+
         counter = 0
-        self.data_mass = [None for i in range(24 * 60 * 60 * 2 * 30)]
+        self.data_mass = [0 for i in range(24 * 60 * 60 * 2 * 30)]
         with open("C:/Users/ADostovalova/Desktop/work/data_phys/202304_dates.txt", "r") as date_file:
             for line in date_file:
                 line = line.rstrip()
-                print(line)
                 self.data_mass[dict_idx.get(line)] = ch[counter,char_num]
                 dict_idx.update({line:counter})
-                counter +=1
-        print("time load")
+                counter += 1
 
-
-        print(self.data_mass)
-
-        '''
-        for i in range(24 * 60 * 60 * 30 * 2):
-        self.data_mass = [None for i in range(24*60*60*2*30)]
-        with open(self.filename, "r") as data_file:
-            for line in data_file:
-
-                ch_list = list(filter(None, line.split(" ")))
-                ch_list = [line1.rstrip() for line1 in ch_list]
-                ch_list = list(filter(None, ch_list))
-
-                self.char_amount = len(ch_list) - 3
-                self.date = ch_list[1]
-                if ch_list[2] in self.time_mass:
-                    ch_list_num = float(ch_list[3 + char_num])#float(ch_list[i]) for i in range(3, len(ch_list))]
-                    self.data_mass[self.time_mass.index(ch_list[2])] = ch_list_num
-
-
-
-
-                # заменяем значения  пропусков на none
-                #ch_list_num = ch_list_num + [float(ch_list[i]) for i in range(4, len(ch_list))]
-
-                #self.data_mass.append(ch_list_num)
-            data_file.close()
             print("data was read")
 
            # собираем значения временного ряда для выбраннойхарактеристики в один массив
 
             self.value_mass = self.data_mass[start: start + window]
-            self.plot_time_mass = self.time_mass[start: start + window]
+            self.value_mass = [self.value_mass[i]  for i in range(1,len(self.value_mass),300)]
+            self.plot_time_mass = self.time_mass_raw[start: start + window]
+            self.plot_time_mass = [self.plot_time_mass[i] for i in range(1,len(self.plot_time_mass), 300)]
 
-
+            '''
             #print("collected")
             fig, axs = [], []
             len_fragm = len(self.plot_time_mass) // split_num
@@ -144,8 +128,27 @@ class data_visualiser:
                 for index, label in enumerate(axs[i].xaxis.get_ticklabels()):
                     if index % 12000 != 0:
                         label.set_visible(False)
-            plt.show()
             '''
+
+            class TimeAxisItem(pg.AxisItem):
+                def tickStrings(self, values, scale, spacing):
+                    return [datetime.fromtimestamp(value) for value in values]
+            pg.mkQApp()
+            axis = pg.DateAxisItem()
+            date_axis = TimeAxisItem(orientation='bottom')
+            graph = pg.PlotWidget(axisItems={'bottom': date_axis})
+
+            graph.plot(x=[x.timestamp() for x in self.plot_time_mass], y=self.value_mass, pen='r')
+            graph.show()
+            #win = pg.GraphicsView()
+            #win.resize(800, 600)
+            #plot =pg.plot(title="Plot with Legend")
+            #plot.setAxisItems({'bottom': axis})
+            #plot.plot(self.plot_time_mass, self.value_mass, pen='r', name='series')
+
+            #plot.addLegend()
+
+
 
 
     def print_hist_holes(self):
@@ -184,17 +187,17 @@ class data_visualiser:
 
 
 #число dht в окне
-window = 24*60*60
+window = 24*60*60*30*2
 
-start = 24*60*60-1
+start = 1#24*60*60-1
 char_num = 8
 
 dv = data_visualiser("C:/Users/ADostovalova/Downloads/Telegram Desktop/omni_min_2023.fmt",
                      "C:/Users/ADostovalova/Desktop/work/data_phys/SW_EXTD_EFIB_LP_HM_20230401T000000_20230401T235959_0101.txt",
                      "C:/Users/ADostovalova/Desktop/work/data_phys")
-dv.print_window_data_by_mounth(3, window,start,char_num)
+dv.print_window_data_by_mounth(1, window,start,char_num)
 
-dv.print_hist_holes()
-
-
+#dv.print_hist_holes()
+#plt.show()
+QtGui.QGuiApplication.instance().exec_()
 
