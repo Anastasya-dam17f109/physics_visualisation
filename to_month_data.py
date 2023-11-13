@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import datetime
+from datetime import datetime
+
 
 
 files_list = [
@@ -35,6 +36,8 @@ files_list = [
 "C:/Users/ADostovalova/Desktop/work/data_phys/SW_EXTD_EFIB_LP_HM_20230420T000000_20230420T235959_0101.txt",
 "C:/Users/ADostovalova/Desktop/work/data_phys/SW_EXTD_EFIB_LP_HM_20230421T000000_20230421T235959_0101.txt"
 ]
+
+'''
 with open("C:/Users/ADostovalova/Desktop/work/data_phys/202304_dates.txt", "w") as date_file , open("C:/Users/ADostovalova/Desktop/work/data_phys/202304_measurements.txt", "w") as measurements_file:
     for _file in files_list :
         counter = 0
@@ -52,5 +55,37 @@ with open("C:/Users/ADostovalova/Desktop/work/data_phys/202304_dates.txt", "w") 
                 counter+=1
 #число dht в окне
 
+'''
+csv_head = "Timestamp;Latitude;Longitude;Height;Radius;SZA;SAz;ST;Diplat;Diplon;MLat;MLT;AACGMLat;AACGMLon;n;Te_hgn;Te_lgn;T_elec;Vs_hgn;Vs_lgn;U_SC\n"
+#csv version
+with open("C:/Users/ADostovalova/Desktop/work/data_phys/202304_data.csv", "w") as data_full:
+    data_full.write(csv_head)
+    for _file in files_list:
+        counter = 0
+        with open(_file, "r") as data_file:
+            for line in data_file:
+                if counter > 3:
+                    ch_list = list(filter(None, line.split(" ")))
+
+                    ch_list = [line1.rstrip() for line1 in ch_list]
+                    ch_list = list(filter(None, ch_list))
+                    ch_list[1] = ch_list[1].replace("-23", "-2023")
+                    full_t, ms_t = ch_list[2].split(".")
+                    ms_t = int(ms_t) * 1000
+                    # print(ch_list)
+                    time_meas = datetime.strptime(ch_list[1] + ':' + full_t + ":" + str(ms_t),"%d-%m-%Y:%H:%M:%S:%f" )
+                    #print(time_meas)
 
 
+                    #data_full.write(ch_list[1] + ':' + ch_list[2] + "\n")
+                    data_full.write( time_meas.strftime("%Y-%m-%d:%H:%M:%S:%f")+";"+ ";".join(ch_list[3:]) + "\n")
+                counter += 1
+
+
+count =0
+
+with open("C:/Users/ADostovalova/Desktop/work/data_phys/202304_data.csv", "r") as data_full:
+    for l in data_full:
+        if  count < 10:
+            print(l)
+            count +=1

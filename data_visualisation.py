@@ -1,7 +1,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import datetime
+from datetime import timedelta
 
+from datetime import datetime
+import pandas as pd
 import pyqtgraph as pg
 #from pyqtgraph.Qt import QtGui
 from pyqtgraph.Qt import QtCore, QtGui
@@ -148,6 +151,34 @@ class data_visualiser:
 
             #plot.addLegend()
 
+    def print_window_data_by_mounth_pandas(self, split_num, window, start, char_num):
+        dateparse = lambda x: datetime.strptime(x,  '%Y-%m-%d:%H:%M:%S:%f')
+           # datetime.datetime.strptime(x, '%Y-%m-%d:%H:%M:%S:%f'))
+        infile = "C:/Users/ADostovalova/Desktop/work/data_phys/202304_data.csv"
+        df = pd.read_csv(infile, sep=';', parse_dates=['Timestamp'], date_parser=dateparse)
+        print(df.head(4))
+        self.data_mass = []
+        self.time_mass = []
+        self.time_mass_raw = []
+        self.value_mass = []
+        left_bound0 = datetime(2023, 4, 1, 0, 0, 0,197000)
+        left_bound1 = datetime(2023, 4, 1, 0, 0, 0, 696000)
+        for i in range(24*60*60*30):
+            self.time_mass.append(left_bound0 )
+            self.time_mass.append(left_bound1)
+            left_bound0 = (left_bound0 + timedelta(0, 1))
+            left_bound1 = left_bound1 + timedelta(0, 1)
+        #dateparse.
+        df_time = pd.DataFrame(self.time_mass,
+                          columns=['Timestamp'])
+        #len(df_time)
+        print(df_time.head(4))
+        anime = df_time.merge( df, how="left", on=["Timestamp"])
+        print(anime.head(4))
+        anime.plot(x="Timestamp", y="Radius")
+        plt.show()
+
+
 
 
 
@@ -195,9 +226,11 @@ char_num = 8
 dv = data_visualiser("C:/Users/ADostovalova/Downloads/Telegram Desktop/omni_min_2023.fmt",
                      "C:/Users/ADostovalova/Desktop/work/data_phys/SW_EXTD_EFIB_LP_HM_20230401T000000_20230401T235959_0101.txt",
                      "C:/Users/ADostovalova/Desktop/work/data_phys")
-dv.print_window_data_by_mounth(1, window,start,char_num)
+dv.print_window_data_by_mounth_pandas(1, window,start,char_num)
 
 #dv.print_hist_holes()
 #plt.show()
-QtGui.QGuiApplication.instance().exec_()
+#QtGui.QGuiApplication.instance().exec_()
 
+(3*inputs - sigma*tetha*(tf.random.normal(shape=(1,inputs.shape[1]))*self.x_i[np.random.randint(0,self.num_grids)]- tf.random.normal(shape=(1,inputs.shape[1]))*self.x_i[np.random.randint(0,self.num_grids)]
+                 - tf.random.normal(shape=(1,inputs.shape[1]))*self.x_i[np.random.randint(0,self.num_grids)] ))/3.0
